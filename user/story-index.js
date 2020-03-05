@@ -6,7 +6,7 @@ export default function truyenTranh({ item, handlDelete, navigation }) {
     const alertDelete=(name, handleDelete)=>{
         return Alert.alert(
             'Xóa truyện',
-            `Bạn có muốn xóa ${name} không?`,
+            `Bạn có muốn xóa ${item.name} không?`,
             [
                 {
                     text:'Có',
