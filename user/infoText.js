@@ -18,10 +18,7 @@ export default function infoText({ route, navigation }) {
             <View >
             <Image style={styles.image}   source={{ uri:avatar }} />
             </View>
-   
             <Text  style={styles.name_story}>Name: {name}</Text>
-           
-            
             <Text  style={styles.category}>Category: {category}</Text>
             <Text  style={styles.category}>Total Chapters:  {total_chapters}</Text>
             <Text  style={styles.category}>Active: {active?'Done': 'Update'}</Text>
@@ -35,7 +32,8 @@ export default function infoText({ route, navigation }) {
 const styles = StyleSheet.create({
     container:{
         width:'100%',
-        height:'100%'
+        height:'100%',
+        marginBottom:20
     },
     image:{  
         marginTop:'20%', 
