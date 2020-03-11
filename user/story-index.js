@@ -30,11 +30,6 @@ export default function truyenTranh({ item, handlDelete,handlUpdate,navigation }
         setShowModal(false);
     }
 
-    var radio_props = [
-        {label: 'Update', value: 0 },
-        {label: 'Done', value: 1 }
-      ];
-
     return (
         <View style={styles.container} >
             <View >
@@ -48,83 +43,9 @@ export default function truyenTranh({ item, handlDelete,handlUpdate,navigation }
                 <Text style={styles.text}>{` ${item.active ? 'Done':'Update'}`}</Text>
             </View>
 
-            <Modal visible={showModal} >
-        <View style={styles.add}>
-          <OutlinedTextField
-            errorColor="#FF0000"
-            baseColor="#9966CC"
-            borderWidth='2'
-            backgroundColor="EEE8AA"
-            textColor='#000000'
-            placeholderTextColor="#fff"
-            label='Đường dẫn ảnh'
-            backgroundColor="#f5f6f5"
-            borderRadius='30'
-            value= {item.avatar}
-            keyboardType='default'  onChangeText={(value) => {}} />
-          <OutlinedTextField
-            errorColor="#FF0000"
-            baseColor="#9966CC"
-            borderWidth='2'
-            backgroundColor="EEE8AA"
-            textColor='#000000'
-            placeholderTextColor="#fff"
-            label='Tên truyện'
-            backgroundColor="#f5f6f5"
-            borderRadius='30'
-            value={item.name}
-            keyboardType='default'  onChangeText={(value) => {}} />
-          <OutlinedTextField
-            errorColor="#FF0000"
-            baseColor="#9966CC"
-            borderWidth='2'
-            backgroundColor="EEE8AA"
-            textColor='#000000'
-            placeholderTextColor="#fff"
-            label='Thể loại'
-            backgroundColor="#f5f6f5"
-            borderRadius='30'
-            value={item.category}
-            keyboardType='default' onChangeText={(value) => {}} />
-          <OutlinedTextField
-            errorColor="#FF0000"
-            baseColor="#9966CC"
-            borderWidth='2'
-            backgroundColor="EEE8AA"
-            textColor='#000000'
-            placeholderTextColor="#fff"
-            label='Số tập'
-            keyboardType='number-pad' 
-            value={item.total_chapters}
-            backgroundColor="#f5f6f5"
-            borderRadius='30'
-           onChangeText={(value) => {}} />
-
-      <View>
-        <RadioForm
-          radio_props={radio_props}
-          initial={0}
-          onPress={(value) => {}}
-        />
-        
-      </View>
-
-    <View>
-        <TouchableOpacity style={styles.button_add} onPress={() => {}}>
-          <Text style={styles.buttonTextAdd}>Update</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button_add } onPress={() => { setShowModal(false)}}>
-          <Text style={styles.buttonTextAdd}>Thoát</Text>
-        </TouchableOpacity>
-    </View>
-       
-
-        </View>
-      </Modal>
-
+           
             <View>
-                <TouchableOpacity onPress={() => {setShowModal(true) }} >
+                <TouchableOpacity onPress={() => {handlUpdate(item.id) }} >
                     <Image
                        source={require('../image/refresh1.png')}
 
@@ -146,6 +67,7 @@ export default function truyenTranh({ item, handlDelete,handlUpdate,navigation }
 
 const styles = StyleSheet.create({
     container: {
+        marginBottom: 20,
         alignItems: 'center',
         justifyContent: 'center',
         flex: 1,

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Modal, TextInput, TouchableOpacity, ImageBackground, FlatList, Keyboard, Button } from 'react-native';
-import RadioForm, {RadioButton, RadioButtonInput, RadioButtonLabel} from 'react-native-simple-radio-button';
+import { StyleSheet, Text, View, Modal, TextInput, TouchableOpacity, ImageBackground, FlatList, Keyboard, Button, ProgressBarAndroid } from 'react-native';
+import RadioForm, { RadioButton, RadioButtonInput, RadioButtonLabel } from 'react-native-simple-radio-button';
 import * as Progress from 'react-native-progress';
 
 
-import TruyenTranhItem from './story-index';
+import StoryItem from './story-index';
 import { OutlinedTextField } from 'react-native-material-textfield';
+import { ScrollView } from 'react-native-gesture-handler';
 
 export default function Story({ navigation }) {
   const [story1, setStory1] = useState([]);
@@ -16,12 +17,13 @@ export default function Story({ navigation }) {
   const [story, setStory] = useState('');
   const [errorName, setErrorName] = useState('');
   const [errorAge, setErrorAge] = useState('');
-  const [showloding, setShowLoding] = useState(true)
-  const [name, setName] =useState('');
-  const [category, setCategory] =useState('');
-  const [total, setTotal] =useState('');
-  const [active, setActive] =useState('');
-  const [avatarUrl, setAvatarUrl] =useState('');
+  const [showLoading, setShowLoading] = useState(false);
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState('');
+  const [total, setTotal] = useState('');
+  const [active, setActive] = useState('');
+  const [isUpdate, setIsUpdate] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
   const API = 'https://5e66495b2aea440016afbc48.mockapi.io/api/vr1/storys/'
   const fetchStorys = () => {
     return fetch(
@@ -35,12 +37,12 @@ export default function Story({ navigation }) {
   useEffect(
     () => {
       fetchStorys();
-  }
-  , []
+    }
+    , []
   )
 
   fetchStorys();
-  
+
 
 
 
@@ -74,11 +76,12 @@ export default function Story({ navigation }) {
     setStory(newStory);
   }
   const handlDelete = (id) => {
+    setShowLoading(true);
     deleteStory(id)
     fetch(
       `${API}/${id}`,
       { method: 'DELETE' }
-    ).then(() => { setShowLoding(false) })
+    ).then(() => {setShowLoading(false);})
       .catch((error) => console.log(error));
 
   }
@@ -86,7 +89,7 @@ export default function Story({ navigation }) {
     const newStory = [...story1]; // clone subjects, neu clone object -> {...subject}
 
     return newStory.push(responseJson); // return de gan gia tri duoi phan then
-}
+  }
 
   const setModalData = (data) => {
     setAvatarUrl(data.avatar);
@@ -96,199 +99,246 @@ export default function Story({ navigation }) {
     setActive(data.active);
 
     setIsUpdate(data.id); // set isUpdate = id -> neu co id thi se hieu la true, con k co id thi se la undefined -> hieu la false
-}
-  const handleSubmit= ()=>{
-    const story= {
+  }
+
+
+  const handleAdd = (responseJson) => {
+    const newStory = [...story1];
+
+    return newStory.push(responseJson);
+  }
+
+  const handleUpdate = (responseJson) => {
+    const newStory = [...story1];
+    const updateStory = newStory.findIndex(item => item.id = responseJson.id);
+
+    newStory[updateStory] = responseJson;
+    return newStory;
+  }
+
+  const handleEdit = (id) => {
+    const story = story1.find((item) => item.id == id);
+    setModalData(story);
+    setShowModalAdd(true);
+  }
+  const handleSubmit = () => {
+    setShowLoading(true);
+    setShowModalAdd(false);
+    const story = {
       avatar: avatarUrl,
       name: name,
       category: category,
       total_chapters: total,
       active: active
-    };
-
-    const newStory= story1.push(story);
-    setStory1(newStory);
-
+    }; const api = isUpdate ? `${API}/${isUpdate}` : API;
     fetch(
-      API,
+      api,
       {
         method: isUpdate ? 'PUT' : 'POST',
         headers: {
-            Accept: 'application/json',
-            'Content-type': 'application/json'
+          Accept: 'application/json',
+          'Content-type': 'application/json'
         },
         body: JSON.stringify(story)
       }
-    ).then((response)=> response.json())
-    .then((responseJson) => {
-      const newSubject=[...story1]
-     story1.push(responseJson);
-      setStory1(newSubject);
-      setShowModalAdd(false);
-    })
-      .catch((error)=>console.log(`ERROR: ${error}`))
+    ).then((response) => response.json())
+      .then((responseJson) => {
+        let newStory = [];
+        if (isUpdate) {
+          newStory = handleUpdate(responseJson);
+        } else {
+          newStory = handleAdd(responseJson);
+        }
+        setShowLoading(false);
+      })
+      .catch((error) => console.log(`ERROR: ${error}`));
+
+    setModalData({
+      category: '',
+      name: '',
+      avatar: '',
+      total_chapters: '',
+      active: '',
+    });
   }
 
   const handleCancle = () => {
     setShowModal(false);
   }
   var radio_props = [
-    {label: 'Update', value: true },
-    {label: 'Done', value: false }
+    { label: 'Update', value: 0 },
+    { label: 'Done', value: 1 }
   ];
 
 
   return (
+    <View>
+     {
+            showLoading
+              ? <View>
+        <ProgressBarAndroid styleAttr="Horizontal" />
+              </View>
+              : null
+          }
 
-    <View style={styles.container}>
-
-      <Text>Xin Chào: {inputName}, Chúc bạn may mắn!</Text>
+    <ScrollView>
       <View>
         <TouchableOpacity style={styles.buttonAdd} onPress={() => { setShowModalAdd(true) }}>
           <Text style={styles.buttonTextAdd}>Add New Story</Text>
         </TouchableOpacity>
       </View>
-      <Modal visible={showModalAdd} >
-        <View style={styles.add}>
-          <OutlinedTextField
-            errorColor="#FF0000"
-            baseColor="#9966CC"
-            borderWidth='2'
-            backgroundColor="EEE8AA"
-            textColor='#000000'
-            placeholderTextColor="#fff"
-            label='Đường dẫn ảnh'
-            error={errorName}
-            backgroundColor="#f5f6f5"
-            borderRadius='30'
-            keyboardType='default' 
-             onChangeText={(avatarurl) => {setAvatarUrl(avatarurl)}} />
-          <OutlinedTextField
-            errorColor="#FF0000"
-            baseColor="#9966CC"
-            borderWidth='2'
-            backgroundColor="EEE8AA"
-            textColor='#000000'
-            placeholderTextColor="#fff"
-            label='Tên truyện'
-            error={errorName}
-            backgroundColor="#f5f6f5"
-            borderRadius='30'
-            keyboardType='default' 
-             onChangeText={(nameStory) => {setName(nameStory)}} />
-          <OutlinedTextField
-            errorColor="#FF0000"
-            baseColor="#9966CC"
-            borderWidth='2'
-            backgroundColor="EEE8AA"
-            textColor='#000000'
-            placeholderTextColor="#fff"
-            label='Thể loại'
-            error={errorName}
-            backgroundColor="#f5f6f5"
-            borderRadius='30'
-            keyboardType='default' 
-           onChangeText={(category) => {setCategory(category)}} />
-          <OutlinedTextField
-            errorColor="#FF0000"
-            baseColor="#9966CC"
-            borderWidth='2'
-            backgroundColor="EEE8AA"
-            textColor='#000000'
-            placeholderTextColor="#fff"
-            label='Số tập'
-            error={errorName}
-            keyboardType='number-pad' 
-            backgroundColor="#f5f6f5"
-            borderRadius='30'
-            
-           onChangeText={(total) => {setTotal(total)}} />
 
-      <View>
-        <RadioForm
-          radio_props={radio_props}
-          initial={true}
-          value= {active}
-          onPress={(value) => {}}
-        />
-        
-      </View>
+      <View style={styles.container}>
+ 
 
-    <View>
-        <TouchableOpacity style={styles.button_add} onPress={() => {handleSubmit()}}>
-          <Text style={styles.buttonTextAdd}>Thêm Truyện</Text>
-        </TouchableOpacity>
+        <Text>Xin Chào: {inputName}, Chúc bạn may mắn!</Text>
 
-        <TouchableOpacity style={styles.button_add } onPress={() => { setShowModalAdd(false)}}>
-          <Text style={styles.buttonTextAdd}>Thoát</Text>
-        </TouchableOpacity>
-    </View>
-       
 
-        </View>
-      </Modal>
+        <Modal visible={showModalAdd} >
+          <View style={styles.add}>
+            <OutlinedTextField
+              errorColor="#FF0000"
+              baseColor="#9966CC"
+              borderWidth='2'
+              backgroundColor="EEE8AA"
+              textColor='#000000'
+              placeholderTextColor="#fff"
+              label='Đường dẫn ảnh'
+              error={errorName}
+              backgroundColor="#f5f6f5"
+              borderRadius='30'
+              keyboardType='default'
+              value= {avatarUrl}
+              onChangeText={(avatarurl) => { setAvatarUrl(avatarurl) }} />
+            <OutlinedTextField
+              errorColor="#FF0000"
+              baseColor="#9966CC"
+              borderWidth='2'
+              backgroundColor="EEE8AA"
+              textColor='#000000'
+              placeholderTextColor="#fff"
+              label='Tên truyện'
+              error={errorName}
+              backgroundColor="#f5f6f5"
+              borderRadius='30'
+              keyboardType='default'
+              value={name}
+              onChangeText={(nameStory) => { setName(nameStory) }} />
+            <OutlinedTextField
+              errorColor="#FF0000"
+              baseColor="#9966CC"
+              borderWidth='2'
+              backgroundColor="EEE8AA"
+              textColor='#000000'
+              placeholderTextColor="#fff"
+              label='Thể loại'
+              error={errorName}
+              backgroundColor="#f5f6f5"
+              borderRadius='30'
+              keyboardType='default'
+              value={category}
+              onChangeText={(category) => { setCategory(category) }} />
+            <OutlinedTextField
+              errorColor="#FF0000"
+              baseColor="#9966CC"
+              borderWidth='2'
+              backgroundColor="EEE8AA"
+              textColor='#000000'
+              placeholderTextColor="#fff"
+              label='Số tập'
+              error={errorName}
+              keyboardType='number-pad'
+              backgroundColor="#f5f6f5"
+              borderRadius='30'
+              value={total}
+              onChangeText={(total) => { setTotal(total) }} />
 
-      {/* {
+            <View>
+              <RadioForm
+                radio_props={radio_props}
+                initial={{active}? 0 : 1}
+                value={active}
+                onPress={(value) => { setActive(value) }}
+              />
+
+            </View>
+
+            <View>
+              <TouchableOpacity style={styles.button_add} onPress={() => { handleSubmit() }}>
+                <Text style={styles.buttonTextAdd}>SUBMIT</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.button_add} onPress={() => { setShowModalAdd(false) }}>
+                <Text style={styles.buttonTextAdd}>EXIT</Text>
+              </TouchableOpacity>
+            </View>
+
+
+          </View>
+        </Modal>
+
+        {/* {
           showloding
           ?
          <Text>----------------</Text>
           :null
         } */}
-      <FlatList
-        data={story1}
-        renderItem={({ item }) => <View>
-          <TouchableOpacity onPress={() => {
-            navigation.navigate('infoText', {
-              name: item.name, avatar: item.avatar, id: item.id,
-              category: item.category, total_chapters: item.total_chapters, active: item.active
-            })
-          }}>
-            <TruyenTranhItem item={item} handlDelete={handlDelete} />
-          </TouchableOpacity>
+        <FlatList
+          data={story1}
+          renderItem={({ item }) => <View>
+            <TouchableOpacity onPress={() => {
+              navigation.navigate('infoText', {
+                name: item.name, avatar: item.avatar, id: item.id,
+                category: item.category, total_chapters: item.total_chapters, active: item.active
+              })
+            }}>
+              <StoryItem item={item} handlDelete={handlDelete} handlUpdate={handleEdit}/>
+            </TouchableOpacity>
 
-        </View>}
-        keyExtractor={(item, index) => index} />
-      <View>
-        <Modal visible={showModal}>
-          <ImageBackground source={{ uri: 'https://i.pinimg.com/originals/95/86/30/9586307741f484ab3480914f8218e3cd.jpg' }} style={styles.imgbg}>
+          </View>}
+          keyExtractor={(item, index) => index} />
+        <View>
+          <Modal visible={showModal}>
+            <ImageBackground source={{ uri: 'https://i.pinimg.com/originals/95/86/30/9586307741f484ab3480914f8218e3cd.jpg' }} style={styles.imgbg}>
 
-            <View style={styles.full}>
-              <Text style={[styles.text]}>WELLCOME</Text>
-              <View style={styles.allbox}>
+              <View style={styles.full}>
+                <Text style={[styles.text]}>WELLCOME</Text>
+                <View style={styles.allbox}>
 
-                <OutlinedTextField
-                  errorColor="#FF0000"
-                  baseColor="#9966CC"
-                  borderWidth='2'
-                  backgroundColor="EEE8AA"
-                  textColor='#fff'
-                  placeholderTextColor="#fff"
-                  label='User'
-                  error={errorName}
-                  backgroundColor="#f5f6f5"
-                  borderRadius='30'
-                  keyboardType='default' value={inputName} onChangeText={(value) => setInputName(value)} />
+                  <OutlinedTextField
+                    errorColor="#FF0000"
+                    baseColor="#9966CC"
+                    borderWidth='2'
+                    backgroundColor="EEE8AA"
+                    textColor='#fff'
+                    placeholderTextColor="#fff"
+                    label='User'
+                    error={errorName}
+                    backgroundColor="#f5f6f5"
+                    borderRadius='30'
+                    keyboardType='default' value={inputName} onChangeText={(value) => setInputName(value)} />
 
-                <OutlinedTextField
-                  errorColor="#FF0000"
-                  baseColor="#9966CC"
-                  textColor='#fff'
-                  placeholderTextColor="#fff"
-                  label='Age'
-                  error={errorAge}
-                  keyboardType='number-pad' value={inputAge} onChangeText={(value) => setInputAge(value)} />
+                  <OutlinedTextField
+                    errorColor="#FF0000"
+                    baseColor="#9966CC"
+                    textColor='#fff'
+                    placeholderTextColor="#fff"
+                    label='Age'
+                    error={errorAge}
+                    keyboardType='number-pad' value={inputAge} onChangeText={(value) => setInputAge(value)} />
+                </View>
+                <TouchableOpacity style={styles.button} onPress={() => { checkValiDate() }}>
+                  <Text style={styles.buttonText}>Submit</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.button} onPress={() => { checkValiDate() }}>
-                <Text style={styles.buttonText}>Submit</Text>
-              </TouchableOpacity>
-            </View>
-          </ImageBackground>
-        </Modal>
+            </ImageBackground>
+          </Modal>
+        </View>
+
+
       </View>
-
-
+    </ScrollView>
     </View>
-
   );
 }
 
@@ -379,9 +429,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 20
 
-  }, 
-  
-  conteiner_add:{
+  },
+
+  conteiner_add: {
     alignContent: 'center',
     alignItems: 'center',
     justifyContent: 'center'
